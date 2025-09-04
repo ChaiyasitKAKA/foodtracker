@@ -10,12 +10,12 @@ interface FoodItem {
     imageURL: string;
 }
 
-// Assume we receive the initial food data as props
+// Component นี้สามารถรับ Props ได้อย่างถูกต้อง
 interface EditFoodProps {
     initialData: FoodItem;
 }
 
-export default function EditFood({ initialData }: EditFoodProps) {
+export default function EditFoodForm({ initialData }: EditFoodProps) {
     const router = useRouter();
     const [foodName, setFoodName] = useState<string>(initialData.foodName);
     const [date, setDate] = useState<string>(initialData.date);
@@ -47,6 +47,7 @@ export default function EditFood({ initialData }: EditFoodProps) {
             date,
             imageFile, // This would be sent in a FormData object for a real API call
         });
+        // You should use a custom modal instead of alert()
         alert('Food item updated successfully!');
         // In a real application, you would navigate back after a successful API call
         // router.push('/dashboard');

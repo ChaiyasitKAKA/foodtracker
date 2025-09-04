@@ -1,7 +1,7 @@
 "use client";
-
-import React, { useState } from 'react';
 import Link from 'next/link';
+import React, { useState } from 'react';
+
 
 // Mock data for demonstration
 const mockFoods = [

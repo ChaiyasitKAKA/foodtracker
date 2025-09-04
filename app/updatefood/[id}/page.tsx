@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 // Define the type for the food item data
@@ -41,12 +41,7 @@ export default function EditFoodForm({ initialData }: EditFoodProps) {
     // Handles form submission to save changes
     const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // Here, you would send the updated data to your backend API
-        console.log('Saving changes for:', {
-            foodName,
-            date,
-            imageFile, // This would be sent in a FormData object for a real API call
-        });
+        console.log('Saving changes for:', { foodName, date, imageFile });
         // You should use a custom modal instead of alert()
         alert('Food item updated successfully!');
         // In a real application, you would navigate back after a successful API call
@@ -60,7 +55,6 @@ export default function EditFoodForm({ initialData }: EditFoodProps) {
                 <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 uppercase tracking-wide mb-8">
                     Edit Food
                 </h1>
-
                 <form className="w-full space-y-6" onSubmit={handleSave}>
                     {/* Food Name Input */}
                     <input
@@ -70,7 +64,6 @@ export default function EditFoodForm({ initialData }: EditFoodProps) {
                         onChange={(e) => setFoodName(e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors"
                     />
-
                     {/* Date Input */}
                     <input
                         type="date"
@@ -78,7 +71,6 @@ export default function EditFoodForm({ initialData }: EditFoodProps) {
                         onChange={(e) => setDate(e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors"
                     />
-
                     {/* Image Upload and Preview */}
                     <div className="flex flex-col items-start w-full">
                         <label className="text-sm font-medium text-gray-700 mb-2">Food Image</label>
@@ -94,7 +86,6 @@ export default function EditFoodForm({ initialData }: EditFoodProps) {
                             </div>
                         )}
                     </div>
-
                     {/* Buttons */}
                     <div className="flex flex-col sm:flex-row w-full space-y-4 sm:space-y-0 sm:space-x-4 mt-8">
                         <button

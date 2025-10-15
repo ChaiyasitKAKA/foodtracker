@@ -1,12 +1,19 @@
 "use client";
 
-import React, { useState } from 'react';
-import { supabase } from '@/lib/supbaseclient';
+import { supabase } from '@/lib/supbaseclient'; // Reverting to alias path for consistency
 import { v4 as uuidv4 } from 'uuid';
+import { useState } from 'react';
 
-// It's a good practice to import specific error types if available
-import { AuthError, PostgrestError } from '@supabase/supabase-js';
-
+// Type guard function to safely check if an error object has a 'message' property
+function isErrorWithMessage(error: unknown): error is { message: string } {
+    return (
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error &&
+        
+        typeof (error as { message: unknown }).message === 'string'
+    );
+}
 
 export default function Register() {
     const [fullName, setFullName] = useState<string>('');
@@ -44,15 +51,16 @@ export default function Register() {
         setMessage('');
 
         try {
-            const { data: authData, error: authError } = await supabase.auth.signUp({
+            // Assign the full response to a variable to help with type inference
+            const authResponse = await supabase.auth.signUp({
                 email: email,
                 password: password,
             });
 
-            if (authError) throw authError;
-            if (!authData.user) throw new Error("Registration successful, but no user data returned.");
+            if (authResponse.error) throw authResponse.error;
+            if (!authResponse.data.user) throw new Error("Registration successful, but no user data returned.");
 
-            const user = authData.user;
+            const user = authResponse.data.user;
             let imageUrl: string | null = null;
             
             if (imageFile) {
@@ -67,7 +75,8 @@ export default function Register() {
                 imageUrl = urlData.publicUrl;
             }
             
-            const { error: insertError } = await supabase.from('user_tb').insert({
+            // Assign the full response to a variable to avoid potential `any` type on destructuring
+            const insertResponse = await supabase.from('user_tb').insert({
                 id: user.id,
                 fullname: fullName,
                 email: email,
@@ -75,31 +84,23 @@ export default function Register() {
                 user_image_url: imageUrl,
             });
 
-            if (insertError) throw insertError;
+            if (insertResponse.error) throw insertResponse.error;
 
             setMessage('ลงทะเบียนสำเร็จ! กรุณาตรวจสอบอีเมลเพื่อยืนยัน');
             setTimeout(() => {
                 window.location.href = '/login';
             }, 3000);
 
-        // --- FIX STARTS HERE ---
-        // Changed `any` to `unknown` for type safety.
         } catch (error: unknown) {
             console.error('Registration error:', error);
             
-            // Now, we check the type of error before accessing its properties.
             let errorMessage = 'An unexpected error occurred.';
-            if (error instanceof Error) {
+            // Use the type guard for safe and clean error message extraction
+            if (isErrorWithMessage(error)) {
                 errorMessage = error.message;
-            } else if (typeof error === 'string') {
-                errorMessage = error;
-            } else if (error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string') {
-                // This handles cases where the error is an object with a message property, like Supabase errors.
-                errorMessage = (error as any).message;
             }
 
             setMessage(`เกิดข้อผิดพลาด: ${errorMessage}`);
-        // --- FIX ENDS HERE ---
         } finally {
             setIsSubmitting(false);
         }
@@ -190,3 +191,4 @@ export default function Register() {
         </main>
     );
 }
+

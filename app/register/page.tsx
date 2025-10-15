@@ -4,20 +4,23 @@ import React, { useState } from 'react';
 import { supabase } from '@/lib/supbaseclient';
 import { v4 as uuidv4 } from 'uuid';
 
+// It's a good practice to import specific error types if available
+import { AuthError, PostgrestError } from '@supabase/supabase-js';
+
 
 export default function Register() {
     const [fullName, setFullName] = useState<string>('');
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [gender, setGender] = useState<string>('');
-    const [imageFile, setImageFile] = useState<File | null>(null); // State for the actual file
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [message, setMessage] = useState<string>('');
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] || null;
-        setImageFile(file); // Store the file object
+        setImageFile(file);
 
         if (file) {
             const reader = new FileReader();
@@ -30,7 +33,6 @@ export default function Register() {
         }
     };
 
-    // 3. Updated handleSubmit function to be async and handle Supabase logic
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!fullName || !email || !password || !gender) {
@@ -42,7 +44,6 @@ export default function Register() {
         setMessage('');
 
         try {
-            
             const { data: authData, error: authError } = await supabase.auth.signUp({
                 email: email,
                 password: password,
@@ -53,7 +54,6 @@ export default function Register() {
 
             const user = authData.user;
             let imageUrl: string | null = null;
-
             
             if (imageFile) {
                 const fileName = `${user.id}/${uuidv4()}`;
@@ -66,7 +66,6 @@ export default function Register() {
                 const { data: urlData } = supabase.storage.from('user_bk').getPublicUrl(fileName);
                 imageUrl = urlData.publicUrl;
             }
-
             
             const { error: insertError } = await supabase.from('user_tb').insert({
                 id: user.id,
@@ -74,7 +73,6 @@ export default function Register() {
                 email: email,
                 gender: gender,
                 user_image_url: imageUrl,
-                
             });
 
             if (insertError) throw insertError;
@@ -84,9 +82,24 @@ export default function Register() {
                 window.location.href = '/login';
             }, 3000);
 
-        } catch (error: any) {
+        // --- FIX STARTS HERE ---
+        // Changed `any` to `unknown` for type safety.
+        } catch (error: unknown) {
             console.error('Registration error:', error);
-            setMessage(`เกิดข้อผิดพลาด: ${error.message}`);
+            
+            // Now, we check the type of error before accessing its properties.
+            let errorMessage = 'An unexpected error occurred.';
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            } else if (error && typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string') {
+                // This handles cases where the error is an object with a message property, like Supabase errors.
+                errorMessage = (error as any).message;
+            }
+
+            setMessage(`เกิดข้อผิดพลาด: ${errorMessage}`);
+        // --- FIX ENDS HERE ---
         } finally {
             setIsSubmitting(false);
         }
@@ -99,7 +112,6 @@ export default function Register() {
                     Register
                 </h1>
 
-                {/* Message display for success or error */}
                 {message && (
                     <div className={`p-3 mb-4 text-sm rounded-lg ${message.startsWith('เกิดข้อผิดพลาด') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
                         {message}
@@ -178,4 +190,3 @@ export default function Register() {
         </main>
     );
 }
-

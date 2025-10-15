@@ -11,7 +11,7 @@ export default function Login() {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
-        setMessage(''); // Clear previous messages
+        setMessage('');
 
         try {
             const { data, error } = await supabase.auth.signInWithPassword({
@@ -26,10 +26,10 @@ export default function Login() {
             setMessage('Login successful! Redirecting...');
             window.location.href = '/dashboard';
 
-        } catch (error: unknown) { // Improved error handling for TypeScript
+        } catch (error: unknown) {
             console.error('Login error:', error);
             let errorMessage = "An unknown error occurred.";
-            // Type check to safely access error properties
+          
             if (error instanceof Error) {
                 errorMessage = error.message;
             }

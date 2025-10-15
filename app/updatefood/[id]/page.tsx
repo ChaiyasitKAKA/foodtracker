@@ -5,25 +5,25 @@ import { v4 as uuidv4 } from "uuid";
 import { supabase } from "@/lib/supbaseclient";
 
 export default function EditFoodPage() {
-    // State for form fields
+   
     const [foodName, setFoodName] = useState<string>('');
     const [meal, setMeal] = useState<string>('');
     const [date, setDate] = useState<string>('');
     const [foodId, setFoodId] = useState<string | null>(null);
 
-    // State for image handling
+    
     const [newImageFile, setNewImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
 
-    // State for UI feedback
+
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [message, setMessage] = useState<string>('');
 
-    // On component mount, get food ID from URL and fetch data
+   
     useEffect(() => {
-        // Function to extract ID from URL path (e.g., /edit-food/123)
+       
         const getFoodIdFromUrl = () => {
             const pathParts = window.location.pathname.split('/');
             return pathParts[pathParts.length - 1] || null;
@@ -57,7 +57,7 @@ export default function EditFoodPage() {
                 if (data) {
                     setFoodName(data.foodname);
                     setMeal(data.meal);
-                    // Format date for the input type="date" which expects 'YYYY-MM-DD'
+                    
                     const formattedDate = new Date(data.fooddate_at).toISOString().split('T')[0];
                     setDate(formattedDate);
                     setImagePreview(data.food_image_url || "");
@@ -99,9 +99,9 @@ export default function EditFoodPage() {
 
             let finalImageUrl = originalImageUrl;
 
-            // If a new image is selected, upload it
+        
             if (newImageFile) {
-                // Optional: Delete the old image from storage to save space
+                
                 if (originalImageUrl) {
                     const oldFileName = originalImageUrl.split('/').pop();
                     if(oldFileName) {
@@ -120,7 +120,7 @@ export default function EditFoodPage() {
                 finalImageUrl = urlData.publicUrl;
             }
 
-            // Update the record in the database
+          
             const { error } = await supabase
                 .from("food_tb")
                 .update({

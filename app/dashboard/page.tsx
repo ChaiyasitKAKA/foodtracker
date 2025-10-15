@@ -104,7 +104,7 @@ export default function Dashboard() {
     return (
         <main className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
-                {/* Header Section (from Supabase version) */}
+           
                 <header className="flex justify-between items-center bg-white p-4 rounded-xl shadow-md mb-8">
                     <div className="flex items-center space-x-4">
                         <img
@@ -124,7 +124,7 @@ export default function Dashboard() {
                     </button>
                 </header>
 
-                {/* Main Content Section (from mock version) */}
+             
                 <div className="bg-white p-8 rounded-2xl shadow-xl w-full">
                     <div className="flex flex-col sm:flex-row w-full mb-6 space-y-4 sm:space-y-0 sm:space-x-4 items-center">
                         <input

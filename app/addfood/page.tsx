@@ -1,9 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supbaseclient";
+import { supabase } from "@/lib/supbaseclient"; 
 import { v4 as uuidv4 } from "uuid";
 
+
+function isErrorWithMessage(error: unknown): error is { message: string } {
+    return (
+        typeof error === 'object' &&
+        error !== null &&
+        'message' in error &&
+    
+        typeof (error as { message: unknown }).message === 'string'
+    );
+}
 
 export default function AddFood() {
     const [foodName, setFoodName] = useState<string>('');
@@ -51,8 +61,9 @@ export default function AddFood() {
             if (imageFile) {
                 const fileName = `${user.id}/${uuidv4()}`;
 
-                const { data: uploadData, error: uploadError } = await supabase.storage
-                    .from('food_bk') // Corrected bucket name
+              
+                const { error: uploadError } = await supabase.storage
+                    .from('food_bk')
                     .upload(fileName, imageFile);
 
                 if (uploadError) {
@@ -60,7 +71,7 @@ export default function AddFood() {
                 }
 
                 const { data: publicUrlData } = supabase.storage
-                    .from("food_bk") // Corrected bucket name
+                    .from("food_bk")
                     .getPublicUrl(fileName);
                 
                 imageUrl = publicUrlData.publicUrl;
@@ -83,9 +94,15 @@ export default function AddFood() {
                 window.location.href = '/dashboard';
             }, 1500);
 
-        } catch (error: any) {
-            console.error('Error saving food:', error.message);
-            setMessage(`เกิดข้อผิดพลาด: ${error.message}`);
+        } catch (error: unknown) { 
+            console.error('Error saving food:', error);
+            
+            let errorMessage = 'An unexpected error occurred.';
+           
+            if (isErrorWithMessage(error)) {
+                errorMessage = error.message;
+            }
+            setMessage(`เกิดข้อผิดพลาด: ${errorMessage}`);
         } finally {
             setIsSubmitting(false);
         }
@@ -163,3 +180,4 @@ export default function AddFood() {
         </main>
     );
 }
+

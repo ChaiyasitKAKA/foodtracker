@@ -1,10 +1,10 @@
 "use client";
 
-import { supabase } from '@/lib/supbaseclient'; // Reverting to alias path for consistency
+import { supabase } from '@/lib/supbaseclient'; 
 import { v4 as uuidv4 } from 'uuid';
 import { useState } from 'react';
 
-// Type guard function to safely check if an error object has a 'message' property
+
 function isErrorWithMessage(error: unknown): error is { message: string } {
     return (
         typeof error === 'object' &&
@@ -51,7 +51,7 @@ export default function Register() {
         setMessage('');
 
         try {
-            // Assign the full response to a variable to help with type inference
+           
             const authResponse = await supabase.auth.signUp({
                 email: email,
                 password: password,
@@ -75,7 +75,7 @@ export default function Register() {
                 imageUrl = urlData.publicUrl;
             }
             
-            // Assign the full response to a variable to avoid potential `any` type on destructuring
+            
             const insertResponse = await supabase.from('user_tb').insert({
                 id: user.id,
                 fullname: fullName,
@@ -95,7 +95,7 @@ export default function Register() {
             console.error('Registration error:', error);
             
             let errorMessage = 'An unexpected error occurred.';
-            // Use the type guard for safe and clean error message extraction
+           
             if (isErrorWithMessage(error)) {
                 errorMessage = error.message;
             }

@@ -22,7 +22,7 @@ export default function Profile() {
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [message, setMessage] = useState<string>('');
 
-    // Fetch user profile on component mount
+ 
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -79,14 +79,13 @@ export default function Profile() {
         try {
             let imageUrl = profile.user_image_url;
 
-            // Step 1: Upload new image if one is selected
+           
             if (imageFile) {
-                // To update a file, you might first remove the old one or just upload with a new name.
-                // For simplicity, we'll upload with a new name. A more robust solution might delete the old file.
+             
                 const fileName = `${profile.id}/${uuidv4()}`;
                 const { error: uploadError } = await supabase.storage
                     .from('user_bk')
-                    .upload(fileName, imageFile, { upsert: true }); // Use upsert to overwrite if needed
+                    .upload(fileName, imageFile, { upsert: true }); 
 
                 if (uploadError) throw uploadError;
 
@@ -94,7 +93,6 @@ export default function Profile() {
                 imageUrl = urlData.publicUrl;
             }
 
-            // Step 2: Update the user profile in 'user_tb'
             const { data, error } = await supabase
                 .from('user_tb')
                 .update({
@@ -108,11 +106,10 @@ export default function Profile() {
 
             if (error) throw error;
             
-            // Update local state with the newly saved data
+            
             setProfile(data); 
             setImagePreview(data.user_image_url);
-            setImageFile(null); // Clear the file input state
-
+            setImageFile(null);
             setMessage('Profile updated successfully!');
 
         } catch (err: unknown) {

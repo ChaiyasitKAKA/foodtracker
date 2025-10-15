@@ -1,15 +1,19 @@
 "use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
+import { useState } from "react";
+import { supabase } from "@/lib/supbaseclient";
+import { v4 as uuidv4 } from "uuid";
+
 
 export default function AddFood() {
     const [foodName, setFoodName] = useState<string>('');
+    const [meal, setMeal] = useState<string>('');
     const [date, setDate] = useState<string>('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    const [message, setMessage] = useState<string>('');
 
-    // Handles image file selection and sets the preview
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] || null;
         setImageFile(file);
@@ -25,53 +29,113 @@ export default function AddFood() {
         }
     };
 
-    // Handles form submission
-    const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // In a real application, you would send this data to a backend
-        console.log({
-            foodName,
-            date,
-            imageFile,
-        });
-        // You could also add a success message or redirect the user
-        alert('Food item saved! Check the console for data.');
+        
+        if (!foodName || !date || !meal) {
+            setMessage('กรุณากรอกข้อมูลให้ครบทุกช่อง');
+            return;
+        }
+
+        setIsSubmitting(true);
+        setMessage('');
+        let imageUrl: string | null = null;
+
+        try {
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !session?.user) {
+                throw new Error("You must be logged in to add food.");
+            }
+            const user = session.user;
+
+            if (imageFile) {
+                const fileName = `${user.id}/${uuidv4()}`;
+
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('food_bk') // Corrected bucket name
+                    .upload(fileName, imageFile);
+
+                if (uploadError) {
+                    throw uploadError;
+                }
+
+                const { data: publicUrlData } = supabase.storage
+                    .from("food_bk") // Corrected bucket name
+                    .getPublicUrl(fileName);
+                
+                imageUrl = publicUrlData.publicUrl;
+            }
+
+            const { error: insertError } = await supabase.from('food_tb').insert({
+                foodname: foodName,
+                meal: meal,
+                fooddate_at: date,
+                food_image_url: imageUrl,
+                user_id: user.id,
+            });
+
+            if (insertError) {
+                throw insertError;
+            }
+
+            setMessage('บันทึกข้อมูลสำเร็จ!');
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 1500);
+
+        } catch (error: any) {
+            console.error('Error saving food:', error.message);
+            setMessage(`เกิดข้อผิดพลาด: ${error.message}`);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
-        <main className="min-h-screen bg-white flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
-            <div className="bg-white p-8 rounded-2xl shadow-xl flex flex-col items-center max-w-lg w-full text-center">
-                {/* Header */}
-                <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 uppercase tracking-wide mb-8">
+        <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
+            <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg text-center">
+                <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 uppercase tracking-wide mb-6">
                     Add Food
                 </h1>
+                
+                {message && (
+                    <div className={`p-3 mb-4 text-sm rounded-lg ${message.startsWith('เกิดข้อผิดพลาด') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                        {message}
+                    </div>
+                )}
 
                 <form className="w-full space-y-6" onSubmit={handleSave}>
-                    {/* Food Name Input */}
-                    <input
+                     <input
                         type="text"
                         placeholder="Food Name"
                         value={foodName}
                         onChange={(e) => setFoodName(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
-
-                    {/* Date Input */}
+                     <select
+                        value={meal}
+                        onChange={(e) => setMeal(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-500"
+                    >
+                        <option value="">Select Meal</option>
+                        <option value="breakfast">Breakfast</option>
+                        <option value="lunch">Lunch</option>
+                        <option value="dinner">Dinner</option>
+                        <option value="snack">Snack</option>
+                    </select>
                     <input
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
-
-                    {/* Image Upload and Preview */}
                     <div className="flex flex-col items-start w-full">
                         <label className="text-sm font-medium text-gray-700 mb-2">Food Image</label>
                         <input
                             type="file"
                             accept="image/*"
                             onChange={handleImageChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors"
+                            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
                         />
                         {imagePreview && (
                             <div className="mt-4 w-full flex justify-center">
@@ -79,23 +143,20 @@ export default function AddFood() {
                             </div>
                         )}
                     </div>
-
-                    {/* Buttons */}
-                    <div className="flex flex-col sm:flex-row w-full space-y-4 sm:space-y-0 sm:space-x-4 mt-8">
+                    <div className="flex flex-col sm:flex-row w-full space-y-4 sm:space-y-0 sm:space-x-4 pt-4">
                         <button
                             type="submit"
-                            className="w-full sm:w-1/2 bg-emerald-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-emerald-600 transition-colors duration-300 transform hover:scale-105"
+                            disabled={isSubmitting}
+                            className="w-full sm:w-1/2 bg-emerald-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-emerald-600 transition-all duration-300 transform hover:scale-105 disabled:bg-gray-400 disabled:scale-100"
                         >
-                            Save Food
+                            {isSubmitting ? 'Saving...' : 'Save Food'}
                         </button>
-                        <Link href="/dashboard" passHref className="w-full sm:w-1/2">
-                            <button
-                                type="button"
-                                className="w-full py-3 px-8 rounded-full border border-emerald-500 text-emerald-500 font-bold hover:bg-emerald-50 transition-colors duration-300 transform hover:scale-105"
-                            >
-                                Go to Dashboard
-                            </button>
-                        </Link>
+                        <a
+                            href="/dashboard"
+                            className="w-full sm:w-1/2 py-3 px-8 rounded-full border border-emerald-500 text-emerald-500 font-bold hover:bg-emerald-50 transition-colors duration-300 transform hover:scale-105 inline-flex items-center justify-center"
+                        >
+                            Go to Dashboard
+                        </a>
                     </div>
                 </form>
             </div>
